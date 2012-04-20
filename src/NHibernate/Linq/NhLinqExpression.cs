@@ -32,6 +32,8 @@ namespace NHibernate.Linq
 			_expression = NhPartialEvaluatingExpressionTreeVisitor.EvaluateIndependentSubtrees(expression);
 			_expression = NameUnNamedParameters.Visit(_expression);
 
+            _expression = SpecialMemberVisitor.Visit(_expression, sessionFactory);
+
 			_constantToParameterMap = ExpressionParameterVisitor.Visit(_expression, sessionFactory);
 
 			ParameterValuesByName = _constantToParameterMap.Values.ToDictionary(p => p.Name,

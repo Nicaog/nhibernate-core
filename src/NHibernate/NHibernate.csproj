@@ -286,6 +286,7 @@
     <Compile Include="LazyInitializationException.cs" />
     <Compile Include="Linq\Clauses\NhHavingClause.cs" />
     <Compile Include="Linq\Clauses\NhJoinClause.cs" />
+    <Compile Include="Linq\Expressions\NhNonParameterExpression.cs" />
     <Compile Include="Linq\Functions\DictionaryGenerator.cs" />
     <Compile Include="Linq\Functions\EqualsGenerator.cs" />
     <Compile Include="Linq\Visitors\NhPartialEvaluatingExpressionTreeVisitor.cs" />
@@ -301,6 +302,7 @@
     <Compile Include="Linq\Visitors\ResultOperatorProcessors\ProcessAggregateFromSeed.cs" />
     <Compile Include="Linq\Visitors\SelectJoinDetector.cs" />
     <Compile Include="Linq\Visitors\SelectClauseNominator.cs" />
+    <Compile Include="Linq\Visitors\SpecialMemberVisitor.cs" />
     <Compile Include="Linq\Visitors\VisitorUtil.cs" />
     <Compile Include="Linq\Visitors\WhereJoinDetector.cs" />
     <Compile Include="Loader\TopologicalSorter.cs" />
