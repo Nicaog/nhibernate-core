@@ -199,7 +199,32 @@ namespace NHibernate.Cfg.XmlHbmBinding
 			log.InfoFormat("Mapping class join: {0} -> {1}", persistentClass.EntityName, join.Table.Name);
 
 			// KEY
-			SimpleValue key = new DependantValue(table, persistentClass.Identifier);
+			SimpleValue key;
+			if (!String.IsNullOrEmpty(joinMapping.key.propertyref))
+			{
+				string propertyRef = joinMapping.key.propertyref;
+				SimpleValue propertyRefKey = new SimpleValue(persistentClass.Table);
+				propertyRefKey.IsAlternateUniqueKey = true;
+				Property property = persistentClass.GetProperty(propertyRef);
+				join.RefIdProperty = property;
+				var columnEnumerator = property.ColumnIterator.GetEnumerator();
+				columnEnumerator.MoveNext();
+				//we only want one column
+				Column column = (Column)columnEnumerator.Current;
+				if (!column.Unique)
+					throw new MappingException(
+						String.Format(
+							"Property {0}, on class {1} must be marked as unique to be joined to with a property-ref.",
+							property.Name, persistentClass.ClassName));
+				propertyRefKey.AddColumn(column);
+				propertyRefKey.TypeName = property.Type.Name;
+				key = new ReferenceDependantValue(table, propertyRefKey);
+			}
+			else
+			{
+				key = new DependantValue(table, persistentClass.Identifier);
+			}
+
 			key.ForeignKeyName = joinMapping.key.foreignkey;
 			join.Key = key;
 			key.IsCascadeDeleteEnabled = joinMapping.key.ondelete == HbmOndelete.Cascade;
