@@ -10,6 +10,9 @@ using NHibernate.Linq.Expressions;
 using NHibernate.Linq.Functions;
 using NHibernate.Linq.Visitors;
 using NUnit.Framework;
+using Remotion.Linq;
+using Remotion.Linq.Clauses;
+using Remotion.Linq.Parsing.Structure.IntermediateModel;
 
 namespace NHibernate.Test.NHSpecificTest.NH2658
 {
@@ -20,8 +23,44 @@ namespace NHibernate.Test.NHSpecificTest.NH2658
             //no implementation for this test
             throw new NotImplementedException();
         }
+
+        [NodeTypeProviderAttribute(typeof(TestExpressionNode))]
+        public static IQueryable<T> TestExtension<T>(this IQueryable<T> query, Expression<Func<T, bool>> clause)
+        {
+            var methodInfo = ((MethodInfo)MethodBase.GetCurrentMethod()).MakeGenericMethod(typeof(T));
+            var queryProvider = query.Provider;
+            var callExpression = Expression.Call(methodInfo, query.Expression, clause);
+            return queryProvider.CreateQuery<T>(callExpression);
+        }
     }
 
+    public class TestExpressionNode : MethodCallExpressionNodeBase
+    {
+        private readonly LambdaExpression _clause;
+
+        public TestExpressionNode(MethodCallExpressionParseInfo parseInfo, LambdaExpression clause)
+            : base(parseInfo)
+        {
+            _clause = clause;
+        }
+
+        #region Overrides of MethodCallExpressionNodeBase
+
+        public override Expression Resolve(ParameterExpression inputParameter, Expression expressionToBeResolved, ClauseGenerationContext clauseGenerationContext)
+        {
+            return Source.Resolve(inputParameter, expressionToBeResolved, clauseGenerationContext);
+        }
+
+        protected override QueryModel ApplyNodeSpecificSemantics(QueryModel queryModel, ClauseGenerationContext clauseGenerationContext)
+        {
+            var whereClause = new WhereClause(_clause.Body);
+            queryModel.BodyClauses.Add(whereClause);
+            return queryModel;
+        }
+
+        #endregion
+    }
+    
     [TestFixture]
     public class Fixture : TestCase
     {
@@ -112,6 +151,18 @@ namespace NHibernate.Test.NHSpecificTest.NH2658
             var nonParameter = new NhNonParameterExpression(constant);
 
             Assert.AreEqual(constant, (ConstantExpression)nonParameter);
+        }
+
+        [Test]
+        public void CanExtendQueryNodes()
+        {
+            using (var session = OpenSession())
+            using(var spy = new SqlLogSpy())
+            {
+                var products = (from p in session.Query<Product>() select p).TestExtension(p => p.Name == "Value").ToList();
+
+                Assert.That(spy.GetWholeLog(), Is.StringContaining("Name=@p0"));
+            }
         }
     }
 }

@@ -73,6 +73,7 @@ namespace NHibernate.Linq
 
 			var nodeTypeProvider = ExpressionTreeParser.CreateDefaultNodeTypeProvider();
 			nodeTypeProvider.InnerProviders.Add(methodInfoRegistry);
+            nodeTypeProvider.InnerProviders.Add(new ExtensionBasedNodeTypeProvider());
 			defaultNodeTypeProvider = nodeTypeProvider;
 		}
 
@@ -91,7 +92,7 @@ namespace NHibernate.Linq
 		}
 	}
 
-	public class AsQueryableExpressionNode : MethodCallExpressionNodeBase
+    public class AsQueryableExpressionNode : MethodCallExpressionNodeBase
 	{
 		public AsQueryableExpressionNode(MethodCallExpressionParseInfo parseInfo) : base(parseInfo)
 		{
